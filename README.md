@@ -1,5 +1,7 @@
 # LongTermCryptoBot
 
+Repository: [github.com/drewmarecek/LongTermCryptoBot](https://github.com/drewmarecek/LongTermCryptoBot)
+
 Paper-trading toolkit for crypto swing-style logic on **4h** candles: **macro trend (EMA 200)** + **Bollinger lower-band snap-back** + **volume spike**, with optional **offline backtests** (SQLite) and an **Alpaca paper live** runner for **BTC/USD**.
 
 ## Features
