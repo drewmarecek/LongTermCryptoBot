@@ -1,6 +1,4 @@
-# LongTermCryptoBot
-
-Quantitative crypto trading experiment focused on end-to-end trading infrastructure.
+Failed crypto trading experiment focused on end-to-end trading infrastructure.
 
 ## Project Context
 
@@ -57,9 +55,3 @@ Run live paper loop:
 ```bash
 python live_bot.py
 ```
-
-## Notes
-
-- This is an educational/portfolio project, not investment advice.
-- Backtests are sensitive to data quality, fee assumptions, and execution modeling.
-- If you fork this repo, keep secrets in environment variables and never commit `.env` or local DB artifacts.
