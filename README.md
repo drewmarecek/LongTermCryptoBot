@@ -1,84 +1,65 @@
 # LongTermCryptoBot
 
-Repository: [github.com/drewmarecek/LongTermCryptoBot](https://github.com/drewmarecek/LongTermCryptoBot)
+Quantitative crypto trading experiment focused on end-to-end trading infrastructure.
 
-Paper-trading toolkit for crypto swing-style logic on **4h** candles: **macro trend (EMA 200)** + **Bollinger lower-band snap-back** + **volume spike**, with optional **offline backtests** (SQLite) and an **Alpaca paper live** runner for **BTC/USD**.
+## Project Context
 
-## Features
+This repository documents an experiment in systematic crypto trading on 1h candles.  
+The strategy research result was not strong enough to beat passive benchmarks, and that outcome is intentionally preserved here.
 
-- **Backtest** (`python -m crypto_bot`): CCXT or CSV OHLCV, paginated history, SQLite `paper_trades` (reset each run), configurable via env vars.
-- **Live paper** (`python live_bot.py`): Alpaca **paper** `TradingClient` + `CryptoHistoricalDataClient`, same `StrategyEngine` / `RiskManager` (1% risk, 2× ATR stop, 6× ATR target = 1:3 R:R), bracket market orders on **BTC/USD**, scheduled every **4h on the UTC hour** (00, 04, 08, 12, 16, 20).
-- **Data prep** (`prepare_data.py`): Merge Binance Vision monthly klines into one clean CSV (Unix-ms OHLCV).
+- **Transparent result:** the V7 Aggressive Strategy backtest returned **-38.8%** over ~26 months (**Jan 2024 - Feb 2026**)
+- **Benchmark context:** this underperformed a passive S&P 500 allocation over the same period
+- **Why publish anyway:** the codebase demonstrates practical engineering for market data, simulation, execution, and risk controls
 
-## Requirements
+## What This Repo Shows
 
-- Python 3.11+ recommended  
-- See `requirements.txt` (ccxt, pandas, pandas-ta, alpaca-py, python-dotenv, schedule, pytz, …)
+- **V8 momentum breakout implementation (1h):** `close > EMA_200`, `close > upper Bollinger band (20, 2)`, and `volume > 1.5x SMA_VOL_20`
+- **Execution model:** market entry on the signal bar close, initial stop at `entry - 2x ATR(14)`, then trailing stop ratchet (`max(old_stop, close - 2x ATR)`)
+- **Multi-asset CSV backtester** (`python -m crypto_bot`) that iterates a basket of cleaned `*_1h_clean.csv` files
+- **Live execution engine** (`live_bot.py`) using Alpaca paper APIs for real-time signal checks, entry, and stop updates
+- **Risk manager** with dynamic ATR-based position sizing, 1% account risk targeting, and leverage notional caps
+- **SQLite trade logger** for reproducible, queryable paper-trade records
+- **Environment-driven config** for symbols, source mode (exchange/csv), log level, and API credentials
+
+## Tech Stack
+
+- Python
+- Pandas
+- Pandas_TA
+- Alpaca-py
+- SQLite
+- Docker-ready workflow (standard Python image + `requirements.txt` entrypoint setup)
+
+## Quick Start
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Configuration
-
-| Mode | Main env vars |
-|------|----------------|
-| Backtest (exchange) | `CRYPTO_BOT_EXCHANGE` (default `kucoin`), `CRYPTO_BOT_TARGET_BARS`, … |
-| Backtest (CSV) | `CRYPTO_BOT_DATA_SOURCE=csv`, `CRYPTO_BOT_CSV_PATH` (default `data/btc_4h_clean.csv`) |
-| Live Alpaca paper | `ALPACA_API_KEY`, `ALPACA_SECRET_KEY` in `.env` (never commit `.env`) |
-
-Example `.env` for live:
+Create `.env` for live paper mode:
 
 ```env
 ALPACA_API_KEY=your_paper_key
 ALPACA_SECRET_KEY=your_paper_secret
 ```
 
-Optional: `LOG_LEVEL=DEBUG`.
-
-## Run backtest
-
-From repo root (so `crypto_bot` resolves):
+Run backtests:
 
 ```bash
-# Exchange (default symbols/timeframe from crypto_bot.config)
-python -m crypto_bot
-
-# Offline CSV (place file under `data/` or set path)
 export CRYPTO_BOT_DATA_SOURCE=csv
-export CRYPTO_BOT_CSV_PATH=data/btc_4h_clean.csv
 python -m crypto_bot
 ```
 
-## Run live paper bot
+Run live paper loop:
 
 ```bash
 python live_bot.py
 ```
 
-Uses `schedule` to call the strategy on UTC boundaries. Ensure your Alpaca account is **paper** and that API keys match paper endpoints.
+## Notes
 
-## Prepare Binance Vision CSVs
-
-Drop headerless monthly CSVs in `data/binance_raw/`, then:
-
-```bash
-python prepare_data.py
-```
-
-Writes `data/btc_1h_clean.csv` (script default filename); adjust paths or `config.DEFAULT_CSV_PATH` for **4h** files as needed.
-
-## Project layout
-
-| Path | Purpose |
-|------|--------|
-| `crypto_bot/` | Package: `DataEngine`, `StrategyEngine`, `RiskManager`, `SQLiteLogger`, `__main__.py` backtest loop |
-| `live_bot.py` | Alpaca paper scheduling + orders |
-| `prepare_data.py` | Binance Vision → single clean OHLCV CSV |
-| `requirements.txt` | Dependencies |
-
-## Disclaimer
-
-Educational / experimental only. Past backtests do not guarantee future results. Crypto and leverage carry substantial risk; verify fee and order rules on your broker.
+- This is an educational/portfolio project, not investment advice.
+- Backtests are sensitive to data quality, fee assumptions, and execution modeling.
+- If you fork this repo, keep secrets in environment variables and never commit `.env` or local DB artifacts.

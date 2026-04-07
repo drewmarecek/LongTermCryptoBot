@@ -4,6 +4,7 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 *.db
+trades.db
 .env
 # Local datasets (Binance Vision / Alpaca); add your own under data/
 data/

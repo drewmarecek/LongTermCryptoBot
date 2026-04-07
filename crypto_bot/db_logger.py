@@ -38,7 +38,7 @@ class SQLiteLogger:
                     entry_price REAL   NOT NULL,
                     quantity    REAL   NOT NULL,
                     stop_loss   REAL   NOT NULL,
-                    take_profit REAL   NOT NULL,
+                    take_profit REAL,
                     status      TEXT   NOT NULL,
                     exit_price  REAL,
                     exit_time   TEXT,
@@ -61,9 +61,9 @@ class SQLiteLogger:
         entry_price: float,
         quantity: float,
         stop_loss: float,
-        take_profit: float,
+        take_profit: float | None = None,
     ) -> int:
-        """Insert a new OPEN row; returns ``trade_id``."""
+        """Insert a new OPEN row; returns ``trade_id``. ``take_profit`` is optional (V8: trailing only)."""
         with self._connect() as conn:
             cur = conn.execute(
                 """
@@ -77,13 +77,13 @@ class SQLiteLogger:
             conn.commit()
             tid = int(cur.lastrowid)
         logger.info(
-            "OPEN trade_id=%s %s qty=%.8f entry=%.6f SL=%.6f TP=%.6f",
+            "OPEN trade_id=%s %s qty=%.8f entry=%.6f SL=%.6f TP=%s",
             tid,
             symbol,
             quantity,
             entry_price,
             stop_loss,
-            take_profit,
+            take_profit if take_profit is not None else "—",
         )
         return tid
 
